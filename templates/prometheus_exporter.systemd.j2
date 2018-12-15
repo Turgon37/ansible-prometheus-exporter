@@ -1,0 +1,21 @@
+{{ ansible_managed|comment(decoration='# ') }}
+
+[Unit]
+Description=Prometheus {{ prometheus_exporter__name|replace('_', ' ') }}
+After=network.target
+
+[Service]
+Type=simple
+{% if prometheus_exporter__service_environment is defined %}
+EnvironmentFile={{ prometheus_exporter__service_environment }}
+{% endif %}
+User={{ prometheus_exporter__service_user }}
+Group={{ prometheus_exporter__service_group }}
+Nice=-5
+ExecStart={{ prometheus_exporter__service_executable }} $OPTIONS
+
+SyslogIdentifier={{ prometheus_exporter__service_name }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

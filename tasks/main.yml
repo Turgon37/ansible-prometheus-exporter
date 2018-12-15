@@ -1,0 +1,38 @@
+---
+# tasks file for ansible-prometheus-exporter
+
+- name: Include the OS specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - defaults.yml
+      skip: true
+  tags: ['always']
+
+- name: Check role availability
+  fail:
+    msg: This module only works with systemd or sysvinit
+  when: not ansible_service_mgr in ['systemd','sysvinit']
+
+- name: Importing initialization tasks
+  import_tasks: init.yml
+  tags: ['always']
+
+- name: Importing install tasks
+  import_tasks: install.yml
+  tags: ['prometheus-exporter', 'prometheus-exporter-install', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-install']
+
+- name: Import configuration tasks
+  import_tasks: configure.yml
+  tags: ['prometheus-exporter', 'prometheus-exporter-configure', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-configure']
+
+- name: Import service tasks
+  import_tasks: service.yml
+  tags: ['prometheus-exporter', 'prometheus-exporter-service', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-service']
+
+- name: Ensure handlers are trigger correctly
+  meta: flush_handlers
+  tags: ['always']

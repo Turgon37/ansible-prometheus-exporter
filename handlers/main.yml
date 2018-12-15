@@ -1,0 +1,9 @@
+---
+# handlers file for ansible-prometheus-exporter
+
+- name: 'restart-{{ prometheus_exporter__tag_name }}'
+  service:
+    name: '{{ prometheus_exporter__service_name }}'
+    state: restarted
+  when: prometheus_exporter__service_enabled|bool
+  listen: ['restart-{{ prometheus_exporter__tag_name }}']
