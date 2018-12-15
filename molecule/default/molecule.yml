@@ -1,0 +1,45 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+platforms:
+  - name: debian8
+    image: turgon37/docker-debian8-ansible
+    command: /lib/systemd/systemd
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: debian9
+    image: turgon37/docker-debian9-ansible
+    command: /lib/systemd/systemd
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: centos7
+    image: turgon37/docker-centos7-ansible
+    command: /usr/lib/systemd/systemd
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+provisioner:
+  name: ansible
+  options:
+    v: true
+    diff: true
+  lint:
+    name: ansible-lint
+  playbooks:
+    create: create.yml
+    prepare: prepare.yml
+    converge: playbook.yml
+    destroy: destroy.yml
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8
+    enabled: true

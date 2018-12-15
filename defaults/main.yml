@@ -1,0 +1,201 @@
+---
+# defaults file for ansible-prometheus-exporter
+
+
+### INSTALL CONFIGURATION
+# ---------------------------------------
+# Select the exporter name to install
+prometheus_exporter__name: node_exporter
+
+# Name of the default variables
+prometheus_exporter__variables_prefix: "{{ prometheus_exporter__name|regex_replace('[\\w]exporter$', '') }}_exporter"
+# Name of the tasks tags
+prometheus_exporter__tag_name: "{{ prometheus_exporter__name|regex_replace('[\\w]exporter$', '') }}-exporter"
+
+# Select the exporter version to install
+prometheus_exporter__version: "{{ vars[prometheus_exporter__variables_prefix~'__version'] }}"
+
+# List of optional required packages to install
+prometheus_exporter__required_packages_names: []
+
+# URL template from which to download the export binary
+prometheus_exporter__download_url: '{{ prometheus_exporter__download_url_map[prometheus_exporter__name] }}'
+
+# URL map for known exporters
+prometheus_exporter__download_url_map:
+  node_exporter:
+    "https://github.com/prometheus/node_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/\
+    node_exporter-{{ prometheus_exporter__version }}.linux\
+    -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
+  blackbox_exporter:
+    "https://github.com/prometheus/blackbox_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/\
+    blackbox_exporter-{{ prometheus_exporter__version }}.linux\
+    -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
+
+# URL template from which to download binary checksum
+prometheus_exporter__checksum_url: '{{ prometheus_exporter__checksum_url_map[prometheus_exporter__name]|d(omit) }}'
+
+# checksum URL map for known exporters
+prometheus_exporter__checksum_url_map:
+  node_exporter:
+    "https://github.com/prometheus/node_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/sha256sums.txt"
+  blackbox_exporter:
+    "https://github.com/prometheus/blackbox_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/sha256sums.txt"
+
+# Specify extension of downloaded release
+prometheus_exporter__temporary_file_extension: "{{ prometheus_exporter__temporary_file_extension_map[prometheus_exporter__name]|d('') }}"
+
+# checksum URL map for known exporters
+prometheus_exporter__temporary_file_extension_map:
+  node_exporter: .tar.gz
+  blackbox_exporter: .tar.gz
+
+# Template to
+prometheus_exporter__temporary_file:
+  "/tmp/{{ prometheus_exporter__name }}-{{ prometheus_exporter__version }}\
+  .{{ ansible_system|lower }}-\
+  {{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}"
+
+
+### SERVICE CONFIGURATION
+# ---------------------------------------
+# The user and group that exporter will run as
+prometheus_exporter__service_user: "{{ prometheus_exporter__name|replace('_', '-') }}"
+prometheus_exporter__service_group: '{{ prometheus_exporter__service_user }}'
+
+# The name of the systemd node_exporter service
+prometheus_exporter__service_name: '{{ prometheus_exporter__name }}'
+
+# If true the node_exporter service will be started and enabled
+prometheus_exporter__service_enabled: true
+
+# Path to node exporter binary
+prometheus_exporter__service_executable: '/usr/local/bin/{{ prometheus_exporter__name }}'
+
+# Location of the service pidfile
+prometheus_exporter__service_pidfile: '/var/run/{{ prometheus_exporter__service_name }}.pid'
+
+# Optional path to a environment file
+# prometheus_exporter__service_environment:
+
+prometheus_exporter__service_cmdline: "{{ prometheus_exporter__service_cmdline_map[prometheus_exporter__name]|d('') }}"
+
+prometheus_exporter__service_cmdline_map:
+  node_exporter: "
+    {% for collector in node_exporter__enabled_collectors -%}
+    {%   if not collector is mapping %}
+    --collector.{{ collector }}
+    {%   else -%}
+    {%     set name, options = (collector.items()|list)[0] -%}
+    {%     for k,v in options|dictsort %}
+    --collector.{{ name }}.{{ k }}={{ v }}
+    {%     endfor -%}
+    {%   endif -%}
+    {% endfor -%}
+    {% for collector in node_exporter__disabled_collectors %}
+    --no-collector.{{ collector }}
+    {% endfor %}
+    --web.telemetry-path={{ node_exporter__web_telemetry_path }}
+    --web.listen-address={{ node_exporter__web_listen_address }}"
+  blackbox_exporter: "
+    --config.file={{ blackbox_exporter__config_file }}
+    --web.listen-address={{ blackbox_exporter__web_listen_address }}"
+
+
+### EXPORTER CONFIGURATION
+# ---------------------------------------
+
+# List of custom directories to create
+prometheus_exporter__create_directories: '{{ prometheus_exporter__create_directories_map[prometheus_exporter__name]|d([]) }}'
+
+prometheus_exporter__create_directories_map:
+  node_exporter:
+    # textfile collector directory
+    - path: '{{ node_exporter__textfile_directory }}'
+      recurse: true
+      mode: '0755'
+
+# List of custom files to create
+prometheus_exporter__create_files: '{{ prometheus_exporter__create_files_map[prometheus_exporter__name]|d([]) }}'
+
+prometheus_exporter__create_files_map:
+  blackbox_exporter:
+    - path: '{{ blackbox_exporter__config_file }}'
+      mode: '0640'
+      content: '{{ blackbox_exporter__config if blackbox_exporter__config is string else blackbox_exporter__config|to_nice_yaml(indent=2) }}'
+
+# List of capabilities to apply on binary
+prometheus_exporter__capabilities: '{{ prometheus_exporter__capabilities_map[prometheus_exporter__name]|d([]) }}'
+
+prometheus_exporter__capabilities_map:
+  node_exporter:
+    # Node exporter can read anything (omit file permissions)
+    - cap_dac_read_search+ep
+  blackbox_exporter:
+    # Required for ICMP probe
+    - cap_net_raw+ep
+
+
+### DEFAULT VALUES FOR KNOWN EXPORTERS
+# ---------------------------------------
+
+### NODE EXPORTER
+# ---------------------------------------
+node_exporter__version: 0.16.0
+
+# Address on which to expose metrics and web interface
+node_exporter__web_listen_address: '0.0.0.0:9100'
+
+# Path under which to expose metrics
+node_exporter__web_telemetry_path: /metrics
+
+# Exposes statistics read from local disk.
+node_exporter__textfile_directory: /var/lib/node_exporter
+
+# List of default enabled collectors
+node_exporter__enabled_collectors_default:
+  - systemd
+  - textfile:
+      directory: '{{ node_exporter__textfile_directory }}'
+
+# List of enabled collectors intented to be used at global level
+node_exporter__enabled_collectors_global: []
+# List of enabled collectors intented to be used at hostgroup level
+node_exporter__enabled_collectors_group: []
+# List of enabled collectors intented to be used at host level
+node_exporter__enabled_collectors_host: []
+#  - filesystem:
+#      ignored-mount-points: "^/(sys|proc|dev)($|/)"
+#      ignored-fs-types: "^(sys|proc|auto)fs$"
+
+# Merged list of enabled collectors
+node_exporter__enabled_collectors: '{{
+  node_exporter__enabled_collectors_default
+  |union(node_exporter__enabled_collectors_global)
+  |union(node_exporter__enabled_collectors_group)
+  |union(node_exporter__enabled_collectors_host) }}'
+
+# List of disabled collectors intented to be used at global level
+node_exporter__disabled_collectors_global: []
+# List of disabled collectors intented to be used at hostgroup level
+node_exporter__disabled_collectors_group: []
+# List of disabled collectors intented to be used at host level
+node_exporter__disabled_collectors_host: []
+
+# Merged list of disabled collectors
+node_exporter__disabled_collectors: '{{
+  node_exporter__disabled_collectors_global
+  |union(node_exporter__disabled_collectors_group)
+  |union(node_exporter__disabled_collectors_host) }}'
+
+### BLACKBOX EXPORTER
+# ---------------------------------------
+blackbox_exporter__web_listen_address: '0.0.0.0:9115'
+
+blackbox_exporter__config_file: /etc/blackbox_exporter.yml
+blackbox_exporter__config:
+  modules: {}

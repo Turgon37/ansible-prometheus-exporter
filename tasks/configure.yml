@@ -1,0 +1,61 @@
+---
+
+- name: 'Create custom directories for {{ prometheus_exporter__name }}'
+  file:
+    path: '{{ item.path }}'
+    owner: '{{ item.owner|d(prometheus_exporter__service_user) }}'
+    group: '{{ item.group|d(prometheus_exporter__service_group) }}'
+    recurse: '{{ item.recurse|d(omit) }}'
+    mode: '{{ item.mode|d(omit) }}'
+    state: directory
+  with_items: '{{ prometheus_exporter__create_directories|list }}'
+  notify: ['restart-{{ prometheus_exporter__tag_name }}']
+
+- name: 'Create custom files content for {{ prometheus_exporter__name }}'
+  copy:
+    dest: '{{ item.path }}'
+    owner: '{{ item.owner|d(prometheus_exporter__service_user) }}'
+    group: '{{ item.group|d(prometheus_exporter__service_group) }}'
+    mode: '{{ item.mode|d(omit) }}'
+    content: '{{ item.content }}'
+  with_items: '{{ prometheus_exporter__create_files|list }}'
+  when: item.content is defined
+  notify: ['restart-{{ prometheus_exporter__tag_name }}']
+
+- name: 'Create custom files templates for {{ prometheus_exporter__name }}'
+  template:
+    src: '{{ item.template }}'
+    dest: '{{ item.path }}'
+    owner: '{{ item.owner|d(prometheus_exporter__service_user) }}'
+    group: '{{ item.group|d(prometheus_exporter__service_group) }}'
+    mode: '{{ item.mode|d(omit) }}'
+  with_items: '{{ prometheus_exporter__create_files|list }}'
+  when: item.template is defined
+  notify: ['restart-{{ prometheus_exporter__tag_name }}']
+
+- name: 'Apply capabilities on {{ prometheus_exporter__name }} service binary'
+  capabilities:
+    path: '{{ prometheus_exporter__service_executable }}'
+    capability: '{{ item }}'
+    state: present
+  with_items: '{{ prometheus_exporter__capabilities|list }}'
+
+# - name: Allow Node Exporter port in SELinux on RedHat OS family
+#  seport:
+#    ports: "{{ node_exporter__web_listen_address.split(':')[1] }}"
+#    proto: tcp
+#    setype: http_port_t
+#    state: present
+#  when:
+#    - ansible_version.full is version('2.4', '>=')
+#    - ansible_selinux.status == 'enabled'
+
+- name: 'Install {{ prometheus_exporter__name }} service environment file'
+  template:
+    src: prometheus_exporter.environment.j2
+    dest: '{{ prometheus_exporter__service_environment }}'
+    owner: root
+    group: root
+    mode: 0640
+  when: prometheus_exporter__service_environment is defined
+  notify: ['restart-{{ prometheus_exporter__tag_name }}']

@@ -1,0 +1,6 @@
+{{ ansible_managed|comment(decoration='# ') }}
+
+# command line options
+OPTIONS="{% for line in (prometheus_exporter__service_cmdline is string)|ternary(prometheus_exporter__service_cmdline.split('\n'), prometheus_exporter__service_cmdline) %}
+{{ line }}
+{%- endfor -%}"

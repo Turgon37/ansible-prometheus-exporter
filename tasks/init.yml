@@ -1,0 +1,18 @@
+---
+
+- name: Assert required variables
+  assert:
+    that:
+      - prometheus_exporter__name in prometheus_exporter__download_url_map or prometheus_exporter__download_url is string
+    msg: 'Ensure that {{ prometheus_exporter__name }} is defined in url map or manually specify download url'
+
+- name: Assert required version variable
+  assert:
+    that:
+      - prometheus_exporter__version is defined and prometheus_exporter__version|length
+
+- name: Assert custom files
+  assert:
+    that:
+      - item.content is defined or item.template is defined
+  with_items: '{{ prometheus_exporter__create_files }}'

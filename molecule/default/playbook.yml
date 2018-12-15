@@ -1,0 +1,9 @@
+---
+
+- name: Run role
+  hosts: all
+  any_errors_fatal: true
+  roles:
+    - role: ansible-prometheus-exporter
+  vars:
+    node_exporter__web_listen_address: '127.0.0.1:9100'

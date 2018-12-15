@@ -1,0 +1,81 @@
+---
+
+- name: 'Install required packages for {{ prometheus_exporter__name }}'
+  package:
+    name: '{{ prometheus_exporter__required_packages_names|list }}'
+    state: present
+
+- name: 'Get checksums for {{ prometheus_exporter__name }}'
+  set_fact:
+    _prometheus_exporter__checksums: "{{ lookup('url', prometheus_exporter__checksum_url, wantlist=true)|list }}"
+  when: prometheus_exporter__checksum_url != omit
+
+- name: 'Get checksum for {{ prometheus_exporter__go_arch_map[ansible_architecture]|default(ansible_architecture) }} architecture'
+  set_fact:
+    _prometheus_exporter__checksum: "{{ item.split(' ')[0] }}"
+  with_items: '{{ _prometheus_exporter__checksums|d([])|list }}'
+  when: "prometheus_exporter__checksum_url != omit
+    and 'linux-'~(prometheus_exporter__go_arch_map[ansible_architecture]|default(ansible_architecture)~'.tar.gz') in item"
+
+- name: 'Download {{ prometheus_exporter__name }} release archive to local folder'
+  become: false
+  get_url:
+    url: '{{ prometheus_exporter__download_url }}'
+    dest: '{{ prometheus_exporter__temporary_file }}{{ prometheus_exporter__temporary_file_extension }}'
+    checksum: "{{ 'sha256:'~_prometheus_exporter__checksum if _prometheus_exporter__checksum is defined else omit }}"
+  register: _prometheus_exporter__download_release
+  until: _prometheus_exporter__download_release is succeeded
+  retries: 5
+  delay: 2
+  check_mode: false
+  delegate_to: localhost
+
+- name: 'Unpack {{ prometheus_exporter__name }} release'
+  become: false
+  unarchive:
+    src: '{{ prometheus_exporter__temporary_file }}{{ prometheus_exporter__temporary_file_extension }}'
+    dest: /tmp
+    creates: '{{ prometheus_exporter__temporary_file }}'
+  check_mode: false
+  delegate_to: localhost
+
+- name: 'Test if service {{ prometheus_exporter__name }} binary exists at location'
+  stat:
+    path: '{{ prometheus_exporter__temporary_file }}/{{ prometheus_exporter__service_executable|basename }}'
+  register: _prometheus_exporter__service_binary_stat
+  delegate_to: localhost
+
+- name: 'Fail if {{ prometheus_exporter__name }} service binary do not exists'
+  fail:
+    msg: >-
+      The service binary was not found in expected location
+      {{ prometheus_exporter__temporary_file }}/{{ prometheus_exporter__service_executable|basename }}
+  when: not _prometheus_exporter__service_binary_stat.stat.exists
+
+- name: 'Create the {{ prometheus_exporter__service_group }} group'
+  group:
+    name: '{{ prometheus_exporter__service_group }}'
+    system: true
+    state: present
+  when: prometheus_exporter__service_group != omit
+
+- name: 'Create the {{ prometheus_exporter__service_user }} user'
+  user:
+    name: '{{ prometheus_exporter__service_user }}'
+    groups: '{{ prometheus_exporter__service_group }}'
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    home: /nonexistent
+    state: present
+  when: prometheus_exporter__service_user != omit
+
+- name: 'Upload {{ prometheus_exporter__name }} binaries to host'
+  copy:
+    src: '{{ prometheus_exporter__temporary_file }}/{{ prometheus_exporter__service_executable|basename }}'
+    dest: '{{ prometheus_exporter__service_executable }}'
+    owner: '{{ prometheus_exporter__service_user }}'
+    group: '{{ prometheus_exporter__service_group }}'
+    mode: 0750
+  notify: ['restart-{{ prometheus_exporter__tag_name }}']

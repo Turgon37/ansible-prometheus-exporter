@@ -1,0 +1,85 @@
+#!/bin/bash
+
+{{ ansible_managed|comment(decoration='# ') }}
+
+### BEGIN INIT INFO
+# Provides:          {{ prometheus_exporter__service_name }}
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Prometheus {{ prometheus_exporter__name|replace('_', ' ') }}
+# Description:
+### END INIT INFO
+
+RETVAL=0
+PROG="{{ prometheus_exporter__service_name }}"
+EXEC="{{ prometheus_exporter__service_executable }}"
+PIDFILE="{{ prometheus_exporter__service_pidfile }}"
+OPTIONS=""
+
+{% if prometheus_exporter__service_environment is defined %}
+# Source service environment
+. {{ prometheus_exporter__service_environment }}
+{% endif %}
+
+# Source function library.
+if [ -f /lib/lsb/init-functions ]; then
+  . /lib/lsb/init-functions
+else
+  echo "/lib/lsb/init-functions is not exists"
+  exit 0
+fi
+
+start() {
+  log_daemon_msg "Starting " "$PROG"
+  start-stop-daemon --start --quiet --background --oknodo \
+     --nicelevel -5 --name $PROG \
+     --pidfile $PIDFILE --make-pidfile \
+     --chuid {{ node_exporter__service_user }}:{{ node_exporter__service_group }} \
+     --startas $EXEC -- $OPTIONS
+  RETVAL=$?
+  if [ $RETVAL -eq 0 ]; then
+    log_success_msg
+  else
+    log_failure_msg
+  fi
+  return $RETVAL
+}
+
+stop() {
+  log_daemon_msg "Stopping " "$PROG"
+  start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+  RETVAL=$?
+  if [ $RETVAL -eq 0 ]; then
+    log_success_msg
+  else
+    log_failure_msg
+  fi
+}
+
+restart ()
+{
+  stop
+  sleep 1
+  start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status_of_proc $PROG "Prometheus Node Exporter"
+    ;;
+  restart)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+esac
+exit $RETVAL
