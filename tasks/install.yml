@@ -22,7 +22,10 @@
   get_url:
     url: '{{ prometheus_exporter__download_url }}'
     dest: '{{ prometheus_exporter__temporary_file }}{{ prometheus_exporter__temporary_file_extension }}'
-    checksum: "{{ 'sha256:'~_prometheus_exporter__checksum if _prometheus_exporter__checksum is defined else omit }}"
+    checksum: "{{ 'sha256:'~_prometheus_exporter__checksum
+      if _prometheus_exporter__checksum is defined
+        and prometheus_exporter__checksum_url != omit
+      else omit }}"
   register: _prometheus_exporter__download_release
   until: _prometheus_exporter__download_release is succeeded
   retries: 5
