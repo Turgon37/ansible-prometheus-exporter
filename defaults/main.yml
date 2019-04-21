@@ -85,25 +85,27 @@ prometheus_exporter__service_pidfile: '/var/run/{{ prometheus_exporter__service_
 prometheus_exporter__service_cmdline: "{{ prometheus_exporter__service_cmdline_map[prometheus_exporter__name]|d('') }}"
 
 prometheus_exporter__service_cmdline_map:
-  node_exporter: "
-    {% for collector in node_exporter__enabled_collectors -%}
-    {%   if not collector is mapping %}
-    --collector.{{ collector }}
-    {%   else -%}
-    {%     set name, options = (collector.items()|list)[0] -%}
-    {%     for k,v in options|dictsort %}
-    --collector.{{ name }}.{{ k }}={{ v }}
-    {%     endfor -%}
-    {%   endif -%}
-    {% endfor -%}
-    {% for collector in node_exporter__disabled_collectors %}
-    --no-collector.{{ collector }}
-    {% endfor %}
-    --web.telemetry-path={{ node_exporter__web_telemetry_path }}
-    --web.listen-address={{ node_exporter__web_listen_address }}"
-  blackbox_exporter: "
-    --config.file={{ blackbox_exporter__config_file }}
-    --web.listen-address={{ blackbox_exporter__web_listen_address }}"
+  node_exporter:
+    - "{% set _l = [] -%}
+      {% for collector in node_exporter__enabled_collectors -%}
+      {%   if not collector is mapping -%}
+      {%     set _ = _l.append('--collector.'~collector) -%}
+      {%   else -%}
+      {%     set name, options = (collector.items()|list)[0] -%}
+      {%     for k,v in options|dictsort -%}
+      {%       set _ = _l.append('--collector.'~name~'.'~k~'='~v) -%}
+      {%     endfor -%}
+      {%   endif -%}
+      {% endfor %}{{ _l }}"
+    - "{% set _l = [] -%}
+      {% for collector in node_exporter__disabled_collectors %}
+      {% set _ = _l.append('--no-collector.'~collector) %}
+      {% endfor %}{{ _l }}"
+    - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
+    - '--web.listen-address={{ node_exporter__web_listen_address }}'
+  blackbox_exporter:
+    - '--config.file={{ blackbox_exporter__config_file }}'
+    - '--web.listen-address={{ blackbox_exporter__web_listen_address }}'
 
 
 ### EXPORTER CONFIGURATION
