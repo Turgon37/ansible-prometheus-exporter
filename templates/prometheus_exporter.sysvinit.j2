@@ -16,12 +16,6 @@ RETVAL=0
 PROG="{{ prometheus_exporter__service_name }}"
 EXEC="{{ prometheus_exporter__service_executable }}"
 PIDFILE="{{ prometheus_exporter__service_pidfile }}"
-OPTIONS=""
-
-{% if prometheus_exporter__service_environment is defined %}
-# Source service environment
-. {{ prometheus_exporter__service_environment }}
-{% endif %}
 
 # Source function library.
 if [ -f /lib/lsb/init-functions ]; then
@@ -33,11 +27,20 @@ fi
 
 start() {
   log_daemon_msg "Starting " "$PROG"
+{% set _items = [] %}
+{% if prometheus_exporter__service_cmdline is string %}
+{%   set _ = _items.extend(prometheus_exporter__service_cmdline.split('\n')) %}
+{% else %}
+{%   set _ = _items.extend(prometheus_exporter__service_cmdline|flatten) %}
+{% endif %}
   start-stop-daemon --start --quiet --background --oknodo \
      --nicelevel -5 --name $PROG \
      --pidfile $PIDFILE --make-pidfile \
-     --chuid {{ node_exporter__service_user }}:{{ node_exporter__service_group }} \
-     --startas $EXEC -- $OPTIONS
+     --chuid {{ prometheus_exporter__service_user }}:{{ prometheus_exporter__service_group }} \
+     --startas $EXEC -- \
+{% for line in _items %}
+       {{ line }} {{ loop.last|ternary('', '\\') }}
+{% endfor %}
   RETVAL=$?
   if [ $RETVAL -eq 0 ]; then
     log_success_msg

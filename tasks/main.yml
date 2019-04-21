@@ -25,11 +25,11 @@
   import_tasks: install.yml
   tags: ['prometheus-exporter', 'prometheus-exporter-install', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-install']
 
-- name: Import configuration tasks
+- name: Importing configuration tasks
   import_tasks: configure.yml
   tags: ['prometheus-exporter', 'prometheus-exporter-configure', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-configure']
 
-- name: Import service tasks
+- name: Importing service tasks
   import_tasks: service.yml
   tags: ['prometheus-exporter', 'prometheus-exporter-service', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-service']
 
