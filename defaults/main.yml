@@ -145,7 +145,8 @@ prometheus_exporter__capabilities_map:
 
 ### NODE EXPORTER
 # ---------------------------------------
-node_exporter__version: 0.16.0
+# current version of node exporter
+node_exporter__version: 0.17.0
 
 # Address on which to expose metrics and web interface
 node_exporter__web_listen_address: '0.0.0.0:9100'
@@ -194,6 +195,9 @@ node_exporter__disabled_collectors: '{{
 
 ### BLACKBOX EXPORTER
 # ---------------------------------------
+# current version of exporter
+blackbox_exporter__version: 0.14.0
+
 blackbox_exporter__web_listen_address: '0.0.0.0:9115'
 
 blackbox_exporter__config_file: /etc/blackbox_exporter.yml
