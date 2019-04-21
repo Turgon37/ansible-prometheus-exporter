@@ -39,6 +39,7 @@
     capability: '{{ item }}'
     state: present
   with_items: '{{ prometheus_exporter__capabilities|list }}'
+  ignore_errors: '{{ ansible_check_mode }}'
 
 # - name: Allow Node Exporter port in SELinux on RedHat OS family
 #  seport:
