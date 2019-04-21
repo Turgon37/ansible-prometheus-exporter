@@ -51,12 +51,9 @@
 #    - ansible_version.full is version('2.4', '>=')
 #    - ansible_selinux.status == 'enabled'
 
-- name: 'Install {{ prometheus_exporter__name }} service environment file'
-  template:
-    src: prometheus_exporter.environment.j2
+- name: 'Remove {{ prometheus_exporter__name }} service environment file'
+  file:
     dest: '{{ prometheus_exporter__service_environment }}'
-    owner: root
-    group: root
-    mode: 0640
+    state: absent
   when: prometheus_exporter__service_environment is defined
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
