@@ -2,7 +2,7 @@
 
 [Unit]
 Description=Prometheus {{ prometheus_exporter__name|replace('_', ' ') }}
-After=network.target
+After=network-online.target
 
 [Service]
 Type=simple

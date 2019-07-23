@@ -43,6 +43,7 @@
   delegate_to: localhost
 
 - name: 'Test if service {{ prometheus_exporter__name }} binary exists at location'
+  become: false
   stat:
     path: '{{ prometheus_exporter__temporary_file }}/{{ prometheus_exporter__service_executable|basename }}'
   register: _prometheus_exporter__service_binary_stat
