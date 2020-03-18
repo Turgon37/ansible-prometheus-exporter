@@ -95,6 +95,7 @@ prometheus_exporter__service_cmdline_map:
       {%     set _ = _l.append('--collector.'~collector) -%}
       {%   else -%}
       {%     set name, options = (collector.items()|list)[0] -%}
+      {%     set _ = _l.append('--collector.'~name) -%}
       {%     for k,v in options|dictsort -%}
       {%       set _ = _l.append('--collector.'~name~'.'~k~'='~v) -%}
       {%     endfor -%}
