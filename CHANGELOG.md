@@ -2,6 +2,11 @@
 
 Items starting with `DEPRECATE` are important deprecation notices.
 
+## 1.0.3 (2020-03-18)
+
+* Fix missing node exporter collector enable option when collectors parameters are used
+* Minor typo in exporter custom files
+
 ## 1.0.2 (2020-03-18)
 
 * Add Debian buster compatibility
