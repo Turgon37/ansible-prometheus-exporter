@@ -18,8 +18,7 @@
     group: '{{ item.group|d(prometheus_exporter__service_group) }}'
     mode: '{{ item.mode|d(omit) }}'
     content: '{{ item.content }}'
-  with_items: '{{ prometheus_exporter__create_files|list }}'
-  when: item.content is defined
+  with_items: "{{ prometheus_exporter__create_files|selectattr('content', 'defined')|list }}"
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
 
 - name: 'Create custom files templates for {{ prometheus_exporter__name }}'
@@ -29,8 +28,7 @@
     owner: '{{ item.owner|d(prometheus_exporter__service_user) }}'
     group: '{{ item.group|d(prometheus_exporter__service_group) }}'
     mode: '{{ item.mode|d(omit) }}'
-  with_items: '{{ prometheus_exporter__create_files|list }}'
-  when: item.template is defined
+  with_items: "{{ prometheus_exporter__create_files|selectattr('template', 'defined')|list }}"
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
 
 - name: 'Apply capabilities on {{ prometheus_exporter__name }} service binary'
