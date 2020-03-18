@@ -23,15 +23,15 @@
 
 - name: Importing install tasks
   import_tasks: install.yml
-  tags: ['prometheus-exporter', 'prometheus-exporter-install', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-install']
+  tags: ['prometheus-exporter', 'prometheus-exporter-install']
 
 - name: Importing configuration tasks
   import_tasks: configure.yml
-  tags: ['prometheus-exporter', 'prometheus-exporter-configure', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-configure']
+  tags: ['prometheus-exporter', 'prometheus-exporter-configure']
 
 - name: Importing service tasks
   import_tasks: service.yml
-  tags: ['prometheus-exporter', 'prometheus-exporter-service', '{{ prometheus_exporter__tag_name }}', '{{ prometheus_exporter__tag_name }}-service']
+  tags: ['prometheus-exporter', 'prometheus-exporter-service']
 
 - name: Ensure handlers are trigger correctly
   meta: flush_handlers
