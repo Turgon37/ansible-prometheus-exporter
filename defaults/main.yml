@@ -55,7 +55,7 @@ prometheus_exporter__temporary_file_extension_map:
   node_exporter: .tar.gz
   blackbox_exporter: .tar.gz
 
-# Template to
+# Store downloaded exporter releases to this path on the ansible controler
 prometheus_exporter__temporary_file:
   "/tmp/{{ prometheus_exporter__name }}-{{ prometheus_exporter__version }}\
   .{{ ansible_system|lower }}-\
@@ -80,11 +80,13 @@ prometheus_exporter__service_executable: '/usr/local/bin/{{ prometheus_exporter_
 # Location of the service pidfile
 prometheus_exporter__service_pidfile: '/var/run/{{ prometheus_exporter__service_name }}.pid'
 
-# Optional path to a environment file
+# DEPRECATED Optional path to a environment file
 # prometheus_exporter__service_environment:
 
+# Exporter command line to give to the executable
 prometheus_exporter__service_cmdline: "{{ prometheus_exporter__service_cmdline_map[prometheus_exporter__name]|d('') }}"
 
+# command line map for known exporters
 prometheus_exporter__service_cmdline_map:
   node_exporter:
     - "{% set _l = [] -%}
@@ -115,6 +117,7 @@ prometheus_exporter__service_cmdline_map:
 # List of custom directories to create
 prometheus_exporter__create_directories: '{{ prometheus_exporter__create_directories_map[prometheus_exporter__name]|d([]) }}'
 
+# required directories map for known exporters
 prometheus_exporter__create_directories_map:
   node_exporter:
     # textfile collector directory
@@ -125,6 +128,7 @@ prometheus_exporter__create_directories_map:
 # List of custom files to create
 prometheus_exporter__create_files: '{{ prometheus_exporter__create_files_map[prometheus_exporter__name]|d([]) }}'
 
+# required files map for known exporters
 prometheus_exporter__create_files_map:
   blackbox_exporter:
     - path: '{{ blackbox_exporter__config_file }}'
@@ -134,6 +138,7 @@ prometheus_exporter__create_files_map:
 # List of capabilities to apply on binary
 prometheus_exporter__capabilities: '{{ prometheus_exporter__capabilities_map[prometheus_exporter__name]|d([]) }}'
 
+# required executable capabilities map for known exporters
 prometheus_exporter__capabilities_map:
   node_exporter:
     # Node exporter can read anything (omit file permissions)
@@ -201,8 +206,10 @@ node_exporter__disabled_collectors: '{{
 # current version of exporter
 blackbox_exporter__version: 0.14.0
 
+# Address on which to expose metrics
 blackbox_exporter__web_listen_address: '0.0.0.0:9115'
 
+# The probes configuration file
 blackbox_exporter__config_file: /etc/blackbox_exporter.yml
 blackbox_exporter__config:
   modules: {}
