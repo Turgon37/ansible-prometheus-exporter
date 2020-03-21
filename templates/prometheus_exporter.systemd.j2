@@ -1,3 +1,4 @@
+#jinja2: trim_blocks:False
 {{ ansible_managed|comment(decoration='# ') }}
 
 [Unit]
@@ -9,16 +10,16 @@ Type=simple
 User={{ prometheus_exporter__service_user }}
 Group={{ prometheus_exporter__service_group }}
 Nice=-5
-{% set _items = [] %}
-{% if prometheus_exporter__service_cmdline is string %}
-{%   set _ = _items.extend(prometheus_exporter__service_cmdline.split('\n')) %}
-{% else %}
-{%   set _ = _items.extend(prometheus_exporter__service_cmdline|flatten) %}
-{% endif %}
-ExecStart={{ prometheus_exporter__service_executable }} \
-{% for line in _items %}
+{% set _items = [] -%}
+{% if prometheus_exporter__service_cmdline is string and prometheus_exporter__service_cmdline|length -%}
+{%   set _ = _items.extend(prometheus_exporter__service_cmdline.split('\n')) -%}
+{% else -%}
+{%   set _ = _items.extend(prometheus_exporter__service_cmdline|flatten) -%}
+{% endif -%}
+ExecStart={{ prometheus_exporter__service_executable }} {% if _items|length %}\{% endif %}
+{%- for line in _items %}
     {{ line }} {{ loop.last|ternary('', '\\') }}
-{% endfor %}
+{%- endfor %}
 
 SyslogIdentifier={{ prometheus_exporter__service_name }}
 Restart=always
