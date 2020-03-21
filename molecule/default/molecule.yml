@@ -36,11 +36,6 @@ provisioner:
     diff: true
   lint:
     name: ansible-lint
-  playbooks:
-    create: create.yml
-    prepare: prepare.yml
-    converge: playbook.yml
-    destroy: destroy.yml
 scenario:
   name: default
 verifier:
