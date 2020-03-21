@@ -10,6 +10,7 @@
         node_exporter__web_listen_address: '127.0.0.1:9100'
     - role: ansible-prometheus-exporter
       vars:
+        mysqld_exporter__version: 0.11.0
         prometheus_exporter__name: mysqld_exporter
         prometheus_exporter__service_enabled: false
         prometheus_exporter__download_url:
