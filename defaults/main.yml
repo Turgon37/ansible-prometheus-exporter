@@ -11,10 +11,10 @@ prometheus_exporter__facts: true
 prometheus_exporter__name: node_exporter
 
 # Name of the default variables
-prometheus_exporter__variables_prefix: "{{ prometheus_exporter__name|regex_replace('[^a-zA-Z0-9]exporter$', '') }}_exporter"
+prometheus_exporter__variables_prefix: '{{ _prometheus_exporter__sanitized_name }}'
 
 # Name of the tasks tags
-prometheus_exporter__tag_name: "{{ prometheus_exporter__name|regex_replace('[^a-zA-Z0-9]exporter$', '') }}-exporter"
+prometheus_exporter__tag_name: "{{ _prometheus_exporter__sanitized_name|replace('_', '-') }}"
 
 # Select the exporter version to install
 prometheus_exporter__version: "{{ vars[prometheus_exporter__variables_prefix~'__version'] }}"

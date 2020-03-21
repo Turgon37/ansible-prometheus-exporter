@@ -12,7 +12,7 @@
 - name: Insert custom fact file
   template:
     src: prometheus_exporter.facts.py.j2
-    dest: "{{ facts__dir|d('/etc/ansible/facts.d') }}/{{ prometheus_exporter__name }}.fact"
+    dest: "{{ facts__dir|d('/etc/ansible/facts.d') }}/{{ _prometheus_exporter__sanitized_name }}.fact"
     owner: root
     group: root
     mode: 0755
