@@ -1,9 +1,5 @@
 ---
 
-- name: Compute some base variables
-  set_fact:
-    _prometheus_exporter__sanitized_name: "{{ prometheus_exporter__name|regex_replace('[^a-zA-Z0-9]+exporter$', '') }}_exporter"
-
 - name: Assert required variables
   assert:
     that:
