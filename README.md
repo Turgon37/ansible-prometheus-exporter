@@ -82,8 +82,8 @@ If 'content' is used, the 'copy' module will be call to directly produce the fil
 | --------------------------------------------------------- | --------------------|-------------------------------------------------------------------------|
 | `node_exporter__web_listen_address`                       | String              | The ipaddress + port on which the exporter will listen                  |
 | `node_exporter__web_telemetry_path`                       | String              | The path prefix on which to serve the metrics                           |
-| `node_exporter__enabled_collectors_global|group|host`     | List of String/Dict | Define collectors to enable with optional options (see below)           |
-| `node_exporter__disabled_collectors_global|group|host`    | List of String      | Disable theses collectors (theses names must not be in the enabled list)|
+| `node_exporter__enabled_collectors_global/group/host`     | List of String/Dict | Define collectors to enable with optional options (see below)           |
+| `node_exporter__disabled_collectors_global/group/host`    | List of String      | Disable theses collectors (theses names must not be in the enabled list)|
 | `node_exporter__textfile_directory`                       | String              | The path where the local disk statistics collector will read metrics    |
 
 Some node-exporter collectors' accepts options. In the variables node_exporter__enabled_collectors_* you can pass simple string and dict
