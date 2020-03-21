@@ -2,6 +2,10 @@
 
 Items starting with `DEPRECATE` are important deprecation notices.
 
+## 1.1.0 (2020-03-21)
+
++ Add facts script
+
 ## 1.0.3 (2020-03-18)
 
 * Fix missing node exporter collector enable option when collectors parameters are used
