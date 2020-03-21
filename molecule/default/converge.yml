@@ -4,20 +4,14 @@
   hosts: all
   any_errors_fatal: true
   roles:
-    - role: ansible-prometheus-exporter
+    - role: turgon37.prometheus_exporter
       vars:
         prometheus_exporter__name: node_exporter
-        node_exporter__web_listen_address: '127.0.0.1:9100'
-    - role: ansible-prometheus-exporter
+    - role: turgon37.prometheus_exporter
       vars:
-        mysqld_exporter__version: 0.11.0
         prometheus_exporter__name: mysqld_exporter
-        prometheus_exporter__service_enabled: false
         prometheus_exporter__download_url:
           "https://github.com/prometheus/mysqld_exporter/releases/download/\
-          v{{ mysqld_exporter__version }}/\
-          mysqld_exporter-{{ mysqld_exporter__version }}.linux\
+          v{{ prometheus_exporter__version }}/\
+          mysqld_exporter-{{ prometheus_exporter__version }}.linux\
           -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
-        prometheus_exporter__temporary_file_extension: .tar.gz
-        prometheus_exporter__service_cmdline: >-
-          --config.my-cnf /dev/null
