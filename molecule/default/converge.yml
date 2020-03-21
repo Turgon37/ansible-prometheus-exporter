@@ -4,10 +4,10 @@
   hosts: all
   any_errors_fatal: true
   roles:
-    - role: turgon37.prometheus_exporter
+    - role: ansible-prometheus-exporter
       vars:
         prometheus_exporter__name: node_exporter
-    - role: turgon37.prometheus_exporter
+    - role: ansible-prometheus-exporter
       vars:
         prometheus_exporter__name: mysqld_exporter
         prometheus_exporter__download_url:
