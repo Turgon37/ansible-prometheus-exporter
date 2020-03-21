@@ -2,6 +2,10 @@
 
 Items starting with `DEPRECATE` are important deprecation notices.
 
+## 1.1.1 (2020-03-22)
+
+* Improve service template to exclude empty cmdline
+
 ## 1.1.0 (2020-03-21)
 
 + Add facts script
