@@ -32,6 +32,7 @@ At this day the role can be used to :
      * service command line
   * configure a systemd service to launch the exporter
   * known exporters : node_exporter, blackbox_exporter
+  * [local facts](#facts)
 
 ## Configuration
 
@@ -100,6 +101,16 @@ If you specify a dict, the collector will be enabled and all dict key-value will
 | `blackbox_exporter__web_listen_address` | String       | The ipaddress + port on which the exporter will listen                                                                     |
 | `blackbox_exporter__config`             | String/Mixed | The raw blackbox yaml configuration file. If this variable is a dict, it will be yamlized before being written to the file |
 
+## Facts
+
+By default the local fact are installed and expose the following variables :
+
+
+```
+ansible_local.[exporter name]:
+    version_full: "1.0.0"
+    version_major: "1"
+```
 
 ## Example
 
