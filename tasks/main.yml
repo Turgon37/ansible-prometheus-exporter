@@ -36,3 +36,8 @@
 - name: Ensure handlers are trigger correctly
   meta: flush_handlers
   tags: ['always']
+
+- name: Optionally including facts tasks
+  include_tasks: facts.yml
+  when: prometheus_exporter__facts|bool
+  tags: ['prometheus-exporter', 'prometheus-exporter-facts']
