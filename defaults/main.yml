@@ -161,7 +161,7 @@ prometheus_exporter__capabilities_map:
 ### NODE EXPORTER
 # ---------------------------------------
 # current version of node exporter
-node_exporter__version: 0.17.0
+node_exporter__version: 0.18.1
 
 # Address on which to expose metrics and web interface
 node_exporter__web_listen_address: '0.0.0.0:9100'
