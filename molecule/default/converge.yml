@@ -9,6 +9,7 @@
         prometheus_exporter__name: node_exporter
     - role: ansible-prometheus-exporter
       vars:
+        mysqld_exporter__version: 0.11.0
         prometheus_exporter__name: mysqld_exporter
         prometheus_exporter__download_url:
           "https://github.com/prometheus/mysqld_exporter/releases/download/\
