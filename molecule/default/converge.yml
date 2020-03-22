@@ -5,5 +5,5 @@
   any_errors_fatal: true
   roles:
     - role: ansible-prometheus-exporter
-  vars:
-    node_exporter__web_listen_address: '127.0.0.1:9100'
+      vars:
+        prometheus_exporter__name: node_exporter
