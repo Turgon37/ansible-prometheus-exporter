@@ -62,7 +62,7 @@ prometheus_exporter__temporary_file_extension_map:
   blackbox_exporter: .tar.gz
 
 # Store downloaded exporter releases to this path on the ansible controler
-prometheus_exporter__temporary_file:
+prometheus_exporter__temporary_filebase:
   "/tmp/{{ prometheus_exporter__name }}-{{ prometheus_exporter__version }}\
   .{{ ansible_system|lower }}-\
   {{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}"
