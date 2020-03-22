@@ -45,7 +45,7 @@ provisioner:
   lint:
     name: ansible-lint
 scenario:
-  name: default
+  name: mysql
 verifier:
   name: testinfra
   lint:
