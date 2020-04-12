@@ -30,15 +30,15 @@ prometheus_exporter__download_url: '{{ prometheus_exporter__download_url_map[pro
 
 # URL map for known exporters
 prometheus_exporter__download_url_map:
-  node_exporter:
-    "https://github.com/prometheus/node_exporter/releases/download/\
-    v{{ prometheus_exporter__version }}/\
-    node_exporter-{{ prometheus_exporter__version }}.linux\
-    -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
   blackbox_exporter:
     "https://github.com/prometheus/blackbox_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/\
     blackbox_exporter-{{ prometheus_exporter__version }}.linux\
+    -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
+  node_exporter:
+    "https://github.com/prometheus/node_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/\
+    node_exporter-{{ prometheus_exporter__version }}.linux\
     -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
 
 # URL template from which to download binary checksum
@@ -46,11 +46,11 @@ prometheus_exporter__checksum_url: '{{ prometheus_exporter__checksum_url_map[pro
 
 # checksum URL map for known exporters
 prometheus_exporter__checksum_url_map:
-  node_exporter:
-    "https://github.com/prometheus/node_exporter/releases/download/\
-    v{{ prometheus_exporter__version }}/sha256sums.txt"
   blackbox_exporter:
     "https://github.com/prometheus/blackbox_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/sha256sums.txt"
+  node_exporter:
+    "https://github.com/prometheus/node_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/sha256sums.txt"
 
 # Specify extension of downloaded release
@@ -58,8 +58,8 @@ prometheus_exporter__temporary_file_extension: "{{ prometheus_exporter__temporar
 
 # checksum URL map for known exporters
 prometheus_exporter__temporary_file_extension_map:
-  node_exporter: .tar.gz
   blackbox_exporter: .tar.gz
+  node_exporter: .tar.gz
 
 # Store downloaded exporter releases to this path on the ansible controler
 prometheus_exporter__temporary_filebase:
@@ -94,7 +94,14 @@ prometheus_exporter__service_cmdline: "{{ prometheus_exporter__service_cmdline_m
 
 # command line map for known exporters
 prometheus_exporter__service_cmdline_map:
+  blackbox_exporter:
+    - "--log.level={{ blackbox_exporter__log_level|d('info') }}"
+    - '--web.listen-address={{ blackbox_exporter__web_listen_address }}'
+    - '--config.file={{ blackbox_exporter__config_file }}'
   node_exporter:
+    - "--log.level={{ node_exporter__log_level|d('info') }}"
+    - '--web.listen-address={{ node_exporter__web_listen_address }}'
+    - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
     - "{% set _l = [] -%}
       {% for collector in node_exporter__enabled_collectors -%}
       {%   if not collector is mapping -%}
@@ -111,11 +118,6 @@ prometheus_exporter__service_cmdline_map:
       {% for collector in node_exporter__disabled_collectors %}
       {% set _ = _l.append('--no-collector.'~collector) %}
       {% endfor %}{{ _l }}"
-    - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
-    - '--web.listen-address={{ node_exporter__web_listen_address }}'
-  blackbox_exporter:
-    - '--config.file={{ blackbox_exporter__config_file }}'
-    - '--web.listen-address={{ blackbox_exporter__web_listen_address }}'
 
 
 ### EXPORTER CONFIGURATION
@@ -147,16 +149,17 @@ prometheus_exporter__capabilities: '{{ prometheus_exporter__capabilities_map[pro
 
 # required executable capabilities map for known exporters
 prometheus_exporter__capabilities_map:
-  node_exporter:
-    # Node exporter can read anything (omit file permissions)
-    - cap_dac_read_search+ep
   blackbox_exporter:
     # Required for ICMP probe
     - cap_net_raw+ep
+  node_exporter:
+    # Node exporter can read anything (omit file permissions)
+    - cap_dac_read_search+ep
 
 
 ### DEFAULT VALUES FOR KNOWN EXPORTERS
 # ---------------------------------------
+
 
 ### NODE EXPORTER
 # ---------------------------------------
@@ -189,10 +192,11 @@ node_exporter__enabled_collectors_host: []
 
 # Merged list of enabled collectors
 node_exporter__enabled_collectors: '{{
-  node_exporter__enabled_collectors_default
-  |union(node_exporter__enabled_collectors_global)
-  |union(node_exporter__enabled_collectors_group)
-  |union(node_exporter__enabled_collectors_host) }}'
+    node_exporter__enabled_collectors_default
+    |union(node_exporter__enabled_collectors_global)
+    |union(node_exporter__enabled_collectors_group)
+    |union(node_exporter__enabled_collectors_host)
+  }}'
 
 # List of disabled collectors intented to be used at global level
 node_exporter__disabled_collectors_global: []
@@ -203,9 +207,11 @@ node_exporter__disabled_collectors_host: []
 
 # Merged list of disabled collectors
 node_exporter__disabled_collectors: '{{
-  node_exporter__disabled_collectors_global
-  |union(node_exporter__disabled_collectors_group)
-  |union(node_exporter__disabled_collectors_host) }}'
+    node_exporter__disabled_collectors_global
+    |union(node_exporter__disabled_collectors_group)
+    |union(node_exporter__disabled_collectors_host)
+  }}'
+
 
 ### BLACKBOX EXPORTER
 # ---------------------------------------
