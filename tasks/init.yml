@@ -14,5 +14,7 @@
 - name: Assert custom files
   assert:
     that:
-      - item.content is defined or item.template is defined
+      - item.content is defined
+        or item.template is defined
+        or item.url is defined
   with_items: '{{ prometheus_exporter__create_files }}'
