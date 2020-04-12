@@ -40,6 +40,11 @@ prometheus_exporter__download_url_map:
     v{{ prometheus_exporter__version }}/\
     node_exporter-{{ prometheus_exporter__version }}.linux\
     -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
+  snmp_exporter:
+    "https://github.com/prometheus/snmp_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/\
+    snmp_exporter-{{ prometheus_exporter__version }}.linux\
+    -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
 
 # URL template from which to download binary checksum
 prometheus_exporter__checksum_url: '{{ prometheus_exporter__checksum_url_map[prometheus_exporter__name]|d(omit) }}'
@@ -52,6 +57,9 @@ prometheus_exporter__checksum_url_map:
   node_exporter:
     "https://github.com/prometheus/node_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/sha256sums.txt"
+  snmp_exporter:
+    "https://github.com/prometheus/snmp_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/sha256sums.txt"
 
 # Specify extension of downloaded release
 prometheus_exporter__temporary_file_extension: "{{ prometheus_exporter__temporary_file_extension_map[prometheus_exporter__name]|d('') }}"
@@ -60,6 +68,7 @@ prometheus_exporter__temporary_file_extension: "{{ prometheus_exporter__temporar
 prometheus_exporter__temporary_file_extension_map:
   blackbox_exporter: .tar.gz
   node_exporter: .tar.gz
+  snmp_exporter: .tar.gz
 
 # Store downloaded exporter releases to this path on the ansible controler
 prometheus_exporter__temporary_filebase:
@@ -118,6 +127,11 @@ prometheus_exporter__service_cmdline_map:
       {% for collector in node_exporter__disabled_collectors %}
       {% set _ = _l.append('--no-collector.'~collector) %}
       {% endfor %}{{ _l }}"
+  snmp_exporter:
+    - '--web.listen-address={{ snmp_exporter__web_listen_address }}'
+    - "--log.level={{ snmp_exporter__log_level|d('info') }}"
+    - "--{{ snmp_exporter__wrap_large_counters|ternary('', 'no-') }}snmp.wrap-large-counters"
+    - '--config.file={{ snmp_exporter__config_file_default }}'
 
 
 ### EXPORTER CONFIGURATION
@@ -133,6 +147,9 @@ prometheus_exporter__create_directories_map:
     - path: '{{ node_exporter__textfile_directory }}'
       recurse: true
       mode: '0755'
+  snmp_exporter:
+    - path: /etc/snmp_exporter
+      mode: '0755'
 
 # List of custom files to create
 prometheus_exporter__create_files: '{{ prometheus_exporter__create_files_map[prometheus_exporter__name]|d([]) }}'
@@ -143,6 +160,12 @@ prometheus_exporter__create_files_map:
     - path: '{{ blackbox_exporter__config_file }}'
       mode: '0640'
       content: '{{ blackbox_exporter__config if blackbox_exporter__config is string else blackbox_exporter__config|to_nice_yaml(indent=2) }}'
+      validate: '{{ prometheus_exporter__service_executable }} --config.file=%s --config.check'
+  snmp_exporter:
+    - path: '{{ snmp_exporter__config_file_default }}'
+      url: https://raw.githubusercontent.com/prometheus/snmp_exporter/v{{ prometheus_exporter__version }}/snmp.yml
+      mode: '0644'
+      validate: '{{ prometheus_exporter__service_executable }} --config.file=%s --dry-run'
 
 # List of capabilities to apply on binary
 prometheus_exporter__capabilities: '{{ prometheus_exporter__capabilities_map[prometheus_exporter__name]|d([]) }}'
@@ -225,3 +248,18 @@ blackbox_exporter__web_listen_address: '0.0.0.0:9115'
 blackbox_exporter__config_file: /etc/blackbox_exporter.yml
 blackbox_exporter__config:
   modules: {}
+
+
+### SNMP EXPORTER
+# ---------------------------------------
+snmp_exporter__version: 0.17.0
+
+# Address on which to expose metrics
+snmp_exporter__web_listen_address: '0.0.0.0:9116'
+
+# SNMP configuration
+snmp_exporter__config_directory: /etc/snmp_exporter
+snmp_exporter__config_file_default: '{{ snmp_exporter__config_directory }}/snmp.default.yml'
+
+# Wrap Counter64 values, every 2^53 to avoid 64-bit float rounding.
+snmp_exporter__wrap_large_counters: true
