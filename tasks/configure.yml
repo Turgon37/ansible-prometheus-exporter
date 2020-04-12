@@ -18,6 +18,7 @@
     group: '{{ item.group|d(prometheus_exporter__service_group) }}'
     mode: '{{ item.mode|d(omit) }}'
     content: '{{ item.content }}'
+    validate: '{{ item.validate|d(omit) }}'
   with_items: "{{ prometheus_exporter__create_files|selectattr('content', 'defined')|list }}"
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
 
@@ -28,6 +29,7 @@
     owner: '{{ item.owner|d(prometheus_exporter__service_user) }}'
     group: '{{ item.group|d(prometheus_exporter__service_group) }}'
     mode: '{{ item.mode|d(omit) }}'
+    validate: '{{ item.validate|d(omit) }}'
   with_items: "{{ prometheus_exporter__create_files|selectattr('template', 'defined')|list }}"
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
 
