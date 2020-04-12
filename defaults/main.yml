@@ -104,11 +104,11 @@ prometheus_exporter__service_cmdline: "{{ prometheus_exporter__service_cmdline_m
 # command line map for known exporters
 prometheus_exporter__service_cmdline_map:
   blackbox_exporter:
-    - "--log.level={{ blackbox_exporter__log_level|d('info') }}"
+    - "--log.level={{ blackbox_exporter__log_level }}"
     - '--web.listen-address={{ blackbox_exporter__web_listen_address }}'
     - '--config.file={{ blackbox_exporter__config_file }}'
   node_exporter:
-    - "--log.level={{ node_exporter__log_level|d('info') }}"
+    - "--log.level={{ node_exporter__log_level }}"
     - '--web.listen-address={{ node_exporter__web_listen_address }}'
     - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
     - "{% set _l = [] -%}
@@ -129,7 +129,7 @@ prometheus_exporter__service_cmdline_map:
       {% endfor %}{{ _l }}"
   snmp_exporter:
     - '--web.listen-address={{ snmp_exporter__web_listen_address }}'
-    - "--log.level={{ snmp_exporter__log_level|d('info') }}"
+    - "--log.level={{ snmp_exporter__log_level }}"
     - "--{{ snmp_exporter__wrap_large_counters|ternary('', 'no-') }}snmp.wrap-large-counters"
     - '--config.file={{ snmp_exporter__config_file_default }}'
 
@@ -192,6 +192,9 @@ node_exporter__version: 0.18.1
 # Address on which to expose metrics and web interface
 node_exporter__web_listen_address: '0.0.0.0:9100'
 
+# Node log level
+node_exporter__log_level: info
+
 # Path under which to expose metrics
 node_exporter__web_telemetry_path: /metrics
 
@@ -244,6 +247,9 @@ blackbox_exporter__version: 0.14.0
 # Address on which to expose metrics
 blackbox_exporter__web_listen_address: '0.0.0.0:9115'
 
+# Blackbox log level
+blackbox_exporter__log_level: info
+
 # The probes configuration file
 blackbox_exporter__config_file: /etc/blackbox_exporter.yml
 blackbox_exporter__config:
@@ -256,6 +262,9 @@ snmp_exporter__version: 0.17.0
 
 # Address on which to expose metrics
 snmp_exporter__web_listen_address: '0.0.0.0:9116'
+
+# SNMP log level
+snmp_exporter__log_level: info
 
 # SNMP configuration
 snmp_exporter__config_directory: /etc/snmp_exporter
