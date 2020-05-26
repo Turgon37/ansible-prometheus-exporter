@@ -146,6 +146,13 @@ prometheus_exporter__service_cmdline_map:
       {% for collector in node_exporter__disabled_collectors -%}
       {%   set _ = _l.append('--no-collector.'~collector) -%}
       {% endfor %}{{ _l }}"
+    - '--collector.ntp.server={{ node_exporter__ntp_server }}'
+    - '--collector.ntp.protocol-version={{ node_exporter__ntp_protocol }}'
+    - '--collector.ntp.server-is-local'
+    - '--collector.ntp.ip-ttl={{ node_exporter__ntp_ttl }}'
+    - '--collector.ntp.max-distance={{ node_exporter__ntp_max_distance }}'
+    - '--collector.ntp.local-offset-tolerance={{ node_exporter__ntp_offset_tolerance }}'
+    - "{{ node_exporter__cmdline|d('') }}"
   snmp_exporter:
     - '--web.listen-address={{ snmp_exporter__web_listen_address }}'
     - "--log.level={{ snmp_exporter__log_level }}"
@@ -260,22 +267,15 @@ node_exporter__disabled_collectors: '{{
     |union(node_exporter__disabled_collectors_host)
   }}'
 
+# NTP collectors options
+node_exporter__ntp_server: 127.0.0.1
+node_exporter__ntp_protocol: 4
+node_exporter__ntp_ttl: 1
+node_exporter__ntp_offset_tolerance: 1ms
+node_exporter__ntp_max_distance: 3.46608s
 
-### BLACKBOX EXPORTER
-# ---------------------------------------
-# current version of exporter
-blackbox_exporter__version: 0.14.0
-
-# Address on which to expose metrics
-blackbox_exporter__web_listen_address: '0.0.0.0:9115'
-
-# Blackbox log level
-blackbox_exporter__log_level: info
-
-# The probes configuration file
-blackbox_exporter__config_file: /etc/blackbox_exporter.yml
-blackbox_exporter__config:
-  modules: {}
+# extra command line
+node_exporter__cmdline:
 
 
 ### SNMP EXPORTER
