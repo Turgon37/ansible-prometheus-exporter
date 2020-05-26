@@ -129,6 +129,7 @@ prometheus_exporter__service_cmdline_map:
     - "--log.level={{ node_exporter__log_level }}"
     - '--web.listen-address={{ node_exporter__web_listen_address }}'
     - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
+    - '--web.max-requests={{ node_exporter__web_max_requests }}'
     - "{% set _l = [] -%}
       {% for collector in node_exporter__enabled_collectors -%}
       {%   if not collector is mapping -%}
@@ -223,6 +224,9 @@ node_exporter__textfile_directory: /var/lib/node_exporter
 node_exporter__enabled_collectors_default:
   - textfile:
       directory: '{{ node_exporter__textfile_directory }}'
+
+# Maximum number of parallel scrape requests
+node_exporter__web_max_requests: 40
 
 # List of enabled collectors intented to be used at global level
 node_exporter__enabled_collectors_global: []
