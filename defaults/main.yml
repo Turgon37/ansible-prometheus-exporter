@@ -210,6 +210,23 @@ prometheus_exporter__capabilities_map:
 # ---------------------------------------
 
 
+### BLACKBOX EXPORTER
+# ---------------------------------------
+# current version of exporter
+blackbox_exporter__version: 0.14.0
+
+# Address on which to expose metrics
+blackbox_exporter__web_listen_address: '0.0.0.0:9115'
+
+# Blackbox log level
+blackbox_exporter__log_level: info
+
+# The probes configuration file
+blackbox_exporter__config_file: /etc/blackbox_exporter.yml
+blackbox_exporter__config:
+  modules: {}
+
+
 ### NODE EXPORTER
 # ---------------------------------------
 # current version of node exporter
