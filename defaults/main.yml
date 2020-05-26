@@ -7,6 +7,24 @@ prometheus_exporter__facts: true
 
 ### INSTALL CONFIGURATION
 # ---------------------------------------
+
+# Theses two values can be set by other role, but
+# not directly by the user's inventory.
+prometheus_exporter__install_from_url_default: true
+prometheus_exporter__install_from_local_default: false
+
+# If true, exporter's binary will be installed from url
+prometheus_exporter__install_from_url: "{{
+    vars[prometheus_exporter__variables_prefix~'__install_from_url']
+    |d(prometheus_exporter__install_from_url_default)
+  }}"
+
+# If true, exporter's binary will be installed from local source
+prometheus_exporter__install_from_local: "{{
+    vars[prometheus_exporter__variables_prefix~'__install_from_local']
+    |d(prometheus_exporter__install_from_local_default)
+  }}"
+
 # Select the exporter name to install
 prometheus_exporter__name: node_exporter
 
