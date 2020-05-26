@@ -18,3 +18,19 @@
         or item.template is defined
         or item.url is defined
   with_items: '{{ prometheus_exporter__create_files }}'
+
+- name: Get systemd version
+  command: systemctl --version
+  when: ansible_local.init.systemd_version is not defined
+  register: _prometheus_exporter__systemd_version_raw
+  changed_when: false
+  check_mode: false
+
+- name: Create _prometheus_exporter__systemd_version_raw variable
+  set_fact:
+    _prometheus_exporter__systemd_version: "{{
+        (_prometheus_exporter__systemd_version_raw.stdout_lines[0]
+          |regex_replace('^systemd\\s(\\d+).*', '\\1'))
+        if _prometheus_exporter__systemd_version_raw is not skipped
+        else ansible_local.init.systemd_version
+      }}"
