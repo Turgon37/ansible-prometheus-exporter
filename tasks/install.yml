@@ -26,6 +26,7 @@
       if _prometheus_exporter__checksum is defined
         and prometheus_exporter__checksum_url != omit
       else omit }}"
+  when: prometheus_exporter__install_from_url|bool
   register: _prometheus_exporter__download_release
   until: _prometheus_exporter__download_release is succeeded
   retries: 5
@@ -39,6 +40,7 @@
     src: '{{ prometheus_exporter__temporary_filebase }}{{ prometheus_exporter__temporary_file_extension }}'
     dest: /tmp
     creates: '{{ prometheus_exporter__temporary_filebase }}'
+  when: prometheus_exporter__install_from_url|bool
   check_mode: false
   delegate_to: localhost
 
@@ -50,6 +52,9 @@
     get_checksum: false
     get_mime: false
     get_attributes: false
+  when: prometheus_exporter__install_from_url|bool
+    or prometheus_exporter__install_from_local|bool
+  check_mode: false
   register: _prometheus_exporter__service_binary_stat
   delegate_to: localhost
 
@@ -58,7 +63,11 @@
     msg: >-
       The service binary was not found in expected location
       {{ prometheus_exporter__temporary_filebase }}/{{ prometheus_exporter__service_executable|basename }}
-  when: not _prometheus_exporter__service_binary_stat.stat.exists
+  when: (
+      prometheus_exporter__install_from_url|bool
+      or prometheus_exporter__install_from_local|bool
+    )
+    and not _prometheus_exporter__service_binary_stat.stat.exists
 
 - name: 'Create the {{ prometheus_exporter__service_group }} group'
   group:
@@ -86,4 +95,6 @@
     owner: '{{ prometheus_exporter__service_user }}'
     group: '{{ prometheus_exporter__service_group }}'
     mode: 0750
+  when: prometheus_exporter__install_from_url|bool
+    or prometheus_exporter__install_from_local|bool
   notify: ['restart-{{ prometheus_exporter__tag_name }}']

@@ -18,6 +18,7 @@
     group: '{{ item.group|d(prometheus_exporter__service_group) }}'
     mode: '{{ item.mode|d(omit) }}'
     content: '{{ item.content }}'
+    validate: '{{ item.validate|d(omit) }}'
   with_items: "{{ prometheus_exporter__create_files|selectattr('content', 'defined')|list }}"
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
 
@@ -28,7 +29,33 @@
     owner: '{{ item.owner|d(prometheus_exporter__service_user) }}'
     group: '{{ item.group|d(prometheus_exporter__service_group) }}'
     mode: '{{ item.mode|d(omit) }}'
+    validate: '{{ item.validate|d(omit) }}'
   with_items: "{{ prometheus_exporter__create_files|selectattr('template', 'defined')|list }}"
+  notify: ['restart-{{ prometheus_exporter__tag_name }}']
+
+- name: 'Download custom files url for {{ prometheus_exporter__name }} to local folder'
+  become: false
+  get_url:
+    url: '{{ item.1.url }}'
+    dest: '{{ prometheus_exporter__temporary_filebase }}.customfile.{{ item.0 }}'
+    checksum: '{{ item.1.checksum|d(omit) }}'
+  with_indexed_items: "{{ prometheus_exporter__create_files|selectattr('url', 'defined')|list }}"
+  register: _prometheus_exporter__download_custom_file
+  until: _prometheus_exporter__download_custom_file is succeeded
+  retries: 5
+  delay: 2
+  check_mode: false
+  delegate_to: localhost
+
+- name: 'Upload custom files url for {{ prometheus_exporter__name }} to host'
+  copy:
+    src: '{{ prometheus_exporter__temporary_filebase }}.customfile.{{ item.0 }}'
+    dest: '{{ item.1.path }}'
+    owner: '{{ item.1.owner|d(prometheus_exporter__service_user) }}'
+    group: '{{ item.1.group|d(prometheus_exporter__service_group) }}'
+    mode: '{{ item.1.mode|d(omit) }}'
+    validate: '{{ item.1.validate|d(omit) }}'
+  with_indexed_items: "{{ prometheus_exporter__create_files|selectattr('url', 'defined')|list }}"
   notify: ['restart-{{ prometheus_exporter__tag_name }}']
 
 - name: 'Apply capabilities on {{ prometheus_exporter__name }} service binary'

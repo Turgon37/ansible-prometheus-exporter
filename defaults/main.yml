@@ -7,6 +7,24 @@ prometheus_exporter__facts: true
 
 ### INSTALL CONFIGURATION
 # ---------------------------------------
+
+# Theses two values can be set by other role, but
+# not directly by the user's inventory.
+prometheus_exporter__install_from_url_default: true
+prometheus_exporter__install_from_local_default: false
+
+# If true, exporter's binary will be installed from url
+prometheus_exporter__install_from_url: "{{
+    vars[prometheus_exporter__variables_prefix~'__install_from_url']
+    |d(prometheus_exporter__install_from_url_default)
+  }}"
+
+# If true, exporter's binary will be installed from local source
+prometheus_exporter__install_from_local: "{{
+    vars[prometheus_exporter__variables_prefix~'__install_from_local']
+    |d(prometheus_exporter__install_from_local_default)
+  }}"
+
 # Select the exporter name to install
 prometheus_exporter__name: node_exporter
 
@@ -30,15 +48,20 @@ prometheus_exporter__download_url: '{{ prometheus_exporter__download_url_map[pro
 
 # URL map for known exporters
 prometheus_exporter__download_url_map:
+  blackbox_exporter:
+    "https://github.com/prometheus/blackbox_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/\
+    blackbox_exporter-{{ prometheus_exporter__version }}.linux\
+    -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
   node_exporter:
     "https://github.com/prometheus/node_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/\
     node_exporter-{{ prometheus_exporter__version }}.linux\
     -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
-  blackbox_exporter:
-    "https://github.com/prometheus/blackbox_exporter/releases/download/\
+  snmp_exporter:
+    "https://github.com/prometheus/snmp_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/\
-    blackbox_exporter-{{ prometheus_exporter__version }}.linux\
+    snmp_exporter-{{ prometheus_exporter__version }}.linux\
     -{{ prometheus_exporter__go_arch_map[ansible_architecture]|d(ansible_architecture) }}.tar.gz"
 
 # URL template from which to download binary checksum
@@ -46,11 +69,14 @@ prometheus_exporter__checksum_url: '{{ prometheus_exporter__checksum_url_map[pro
 
 # checksum URL map for known exporters
 prometheus_exporter__checksum_url_map:
+  blackbox_exporter:
+    "https://github.com/prometheus/blackbox_exporter/releases/download/\
+    v{{ prometheus_exporter__version }}/sha256sums.txt"
   node_exporter:
     "https://github.com/prometheus/node_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/sha256sums.txt"
-  blackbox_exporter:
-    "https://github.com/prometheus/blackbox_exporter/releases/download/\
+  snmp_exporter:
+    "https://github.com/prometheus/snmp_exporter/releases/download/\
     v{{ prometheus_exporter__version }}/sha256sums.txt"
 
 # Specify extension of downloaded release
@@ -58,8 +84,9 @@ prometheus_exporter__temporary_file_extension: "{{ prometheus_exporter__temporar
 
 # checksum URL map for known exporters
 prometheus_exporter__temporary_file_extension_map:
-  node_exporter: .tar.gz
   blackbox_exporter: .tar.gz
+  node_exporter: .tar.gz
+  snmp_exporter: .tar.gz
 
 # Store downloaded exporter releases to this path on the ansible controler
 prometheus_exporter__temporary_filebase:
@@ -94,7 +121,15 @@ prometheus_exporter__service_cmdline: "{{ prometheus_exporter__service_cmdline_m
 
 # command line map for known exporters
 prometheus_exporter__service_cmdline_map:
+  blackbox_exporter:
+    - "--log.level={{ blackbox_exporter__log_level }}"
+    - '--web.listen-address={{ blackbox_exporter__web_listen_address }}'
+    - '--config.file={{ blackbox_exporter__config_file }}'
   node_exporter:
+    - "--log.level={{ node_exporter__log_level }}"
+    - '--web.listen-address={{ node_exporter__web_listen_address }}'
+    - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
+    - '--web.max-requests={{ node_exporter__web_max_requests }}'
     - "{% set _l = [] -%}
       {% for collector in node_exporter__enabled_collectors -%}
       {%   if not collector is mapping -%}
@@ -108,14 +143,21 @@ prometheus_exporter__service_cmdline_map:
       {%   endif -%}
       {% endfor %}{{ _l }}"
     - "{% set _l = [] -%}
-      {% for collector in node_exporter__disabled_collectors %}
-      {% set _ = _l.append('--no-collector.'~collector) %}
+      {% for collector in node_exporter__disabled_collectors -%}
+      {%   set _ = _l.append('--no-collector.'~collector) -%}
       {% endfor %}{{ _l }}"
-    - '--web.telemetry-path={{ node_exporter__web_telemetry_path }}'
-    - '--web.listen-address={{ node_exporter__web_listen_address }}'
-  blackbox_exporter:
-    - '--config.file={{ blackbox_exporter__config_file }}'
-    - '--web.listen-address={{ blackbox_exporter__web_listen_address }}'
+    - '--collector.ntp.server={{ node_exporter__ntp_server }}'
+    - '--collector.ntp.protocol-version={{ node_exporter__ntp_protocol }}'
+    - '--collector.ntp.server-is-local'
+    - '--collector.ntp.ip-ttl={{ node_exporter__ntp_ttl }}'
+    - '--collector.ntp.max-distance={{ node_exporter__ntp_max_distance }}'
+    - '--collector.ntp.local-offset-tolerance={{ node_exporter__ntp_offset_tolerance }}'
+    - "{{ node_exporter__cmdline|d('') }}"
+  snmp_exporter:
+    - '--web.listen-address={{ snmp_exporter__web_listen_address }}'
+    - "--log.level={{ snmp_exporter__log_level }}"
+    - "--{{ snmp_exporter__wrap_large_counters|ternary('', 'no-') }}snmp.wrap-large-counters"
+    - '--config.file={{ snmp_exporter__config_file }}'
 
 
 ### EXPORTER CONFIGURATION
@@ -131,6 +173,9 @@ prometheus_exporter__create_directories_map:
     - path: '{{ node_exporter__textfile_directory }}'
       recurse: true
       mode: '0755'
+  snmp_exporter:
+    - path: /etc/snmp_exporter
+      mode: '0755'
 
 # List of custom files to create
 prometheus_exporter__create_files: '{{ prometheus_exporter__create_files_map[prometheus_exporter__name]|d([]) }}'
@@ -141,22 +186,46 @@ prometheus_exporter__create_files_map:
     - path: '{{ blackbox_exporter__config_file }}'
       mode: '0640'
       content: '{{ blackbox_exporter__config if blackbox_exporter__config is string else blackbox_exporter__config|to_nice_yaml(indent=2) }}'
+      validate: '{{ prometheus_exporter__service_executable }} --config.file=%s --config.check'
+  snmp_exporter:
+    - path: '{{ snmp_exporter__config_file_default }}'
+      url: https://raw.githubusercontent.com/prometheus/snmp_exporter/v{{ prometheus_exporter__version }}/snmp.yml
+      mode: '0644'
+      validate: '{{ prometheus_exporter__service_executable }} --config.file=%s --dry-run'
 
 # List of capabilities to apply on binary
 prometheus_exporter__capabilities: '{{ prometheus_exporter__capabilities_map[prometheus_exporter__name]|d([]) }}'
 
 # required executable capabilities map for known exporters
 prometheus_exporter__capabilities_map:
-  node_exporter:
-    # Node exporter can read anything (omit file permissions)
-    - cap_dac_read_search+ep
   blackbox_exporter:
     # Required for ICMP probe
     - cap_net_raw+ep
+  node_exporter:
+    # Node exporter can read anything (omit file permissions)
+    - cap_dac_read_search+ep
 
 
 ### DEFAULT VALUES FOR KNOWN EXPORTERS
 # ---------------------------------------
+
+
+### BLACKBOX EXPORTER
+# ---------------------------------------
+# current version of exporter
+blackbox_exporter__version: 0.14.0
+
+# Address on which to expose metrics
+blackbox_exporter__web_listen_address: '0.0.0.0:9115'
+
+# Blackbox log level
+blackbox_exporter__log_level: info
+
+# The probes configuration file
+blackbox_exporter__config_file: /etc/blackbox_exporter.yml
+blackbox_exporter__config:
+  modules: {}
+
 
 ### NODE EXPORTER
 # ---------------------------------------
@@ -165,6 +234,9 @@ node_exporter__version: 0.18.1
 
 # Address on which to expose metrics and web interface
 node_exporter__web_listen_address: '0.0.0.0:9100'
+
+# Node log level
+node_exporter__log_level: info
 
 # Path under which to expose metrics
 node_exporter__web_telemetry_path: /metrics
@@ -176,6 +248,9 @@ node_exporter__textfile_directory: /var/lib/node_exporter
 node_exporter__enabled_collectors_default:
   - textfile:
       directory: '{{ node_exporter__textfile_directory }}'
+
+# Maximum number of parallel scrape requests
+node_exporter__web_max_requests: 40
 
 # List of enabled collectors intented to be used at global level
 node_exporter__enabled_collectors_global: []
@@ -189,10 +264,11 @@ node_exporter__enabled_collectors_host: []
 
 # Merged list of enabled collectors
 node_exporter__enabled_collectors: '{{
-  node_exporter__enabled_collectors_default
-  |union(node_exporter__enabled_collectors_global)
-  |union(node_exporter__enabled_collectors_group)
-  |union(node_exporter__enabled_collectors_host) }}'
+    node_exporter__enabled_collectors_default
+    |union(node_exporter__enabled_collectors_global)
+    |union(node_exporter__enabled_collectors_group)
+    |union(node_exporter__enabled_collectors_host)
+  }}'
 
 # List of disabled collectors intented to be used at global level
 node_exporter__disabled_collectors_global: []
@@ -203,19 +279,40 @@ node_exporter__disabled_collectors_host: []
 
 # Merged list of disabled collectors
 node_exporter__disabled_collectors: '{{
-  node_exporter__disabled_collectors_global
-  |union(node_exporter__disabled_collectors_group)
-  |union(node_exporter__disabled_collectors_host) }}'
+    node_exporter__disabled_collectors_global
+    |union(node_exporter__disabled_collectors_group)
+    |union(node_exporter__disabled_collectors_host)
+  }}'
 
-### BLACKBOX EXPORTER
+# NTP collectors options
+node_exporter__ntp_server: 127.0.0.1
+node_exporter__ntp_protocol: 4
+node_exporter__ntp_ttl: 1
+node_exporter__ntp_offset_tolerance: 1ms
+node_exporter__ntp_max_distance: 3.46608s
+
+# extra command line
+node_exporter__cmdline:
+
+
+### SNMP EXPORTER
 # ---------------------------------------
-# current version of exporter
-blackbox_exporter__version: 0.14.0
+snmp_exporter__version: 0.17.0
 
 # Address on which to expose metrics
-blackbox_exporter__web_listen_address: '0.0.0.0:9115'
+snmp_exporter__web_listen_address: '0.0.0.0:9116'
 
-# The probes configuration file
-blackbox_exporter__config_file: /etc/blackbox_exporter.yml
-blackbox_exporter__config:
-  modules: {}
+# SNMP log level
+snmp_exporter__log_level: info
+
+# SNMP configuration
+snmp_exporter__config_directory: /etc/snmp_exporter
+
+# Default snmp configuration from github repository
+snmp_exporter__config_file_default: '{{ snmp_exporter__config_directory }}/snmp.default.yml'
+
+# Configuration file used by exporter
+snmp_exporter__config_file: '{{ snmp_exporter__config_file_default }}'
+
+# Wrap Counter64 values, every 2^53 to avoid 64-bit float rounding.
+snmp_exporter__wrap_large_counters: true

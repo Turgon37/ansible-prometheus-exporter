@@ -17,12 +17,28 @@ Nice=-5
 {%   set _ = _items.extend(prometheus_exporter__service_cmdline|flatten) -%}
 {% endif -%}
 ExecStart={{ prometheus_exporter__service_executable }} {% if _items|length %}\{% endif %}
-{%- for line in _items %}
+{%- for line in _items|reject('match','^\s*$')|list %}
     {{ line }} {{ loop.last|ternary('', '\\') }}
 {%- endfor %}
 
+{# inspired by cloudalchemy/ansible-node-exporter role -#}
 SyslogIdentifier={{ prometheus_exporter__service_name }}
 Restart=always
+RestartSec=1
+{% for m in ansible_mounts if m.mount == '/home' %}
+ProtectHome=read-only
+{% else %}
+ProtectHome=yes
+{% endfor %}
+PrivateTmp=yes
+{% if _prometheus_exporter__systemd_version is version(232, '>=') %}
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=yes
+{% else %}
+ProtectSystem=full
+{% endif %}
 
 [Install]
 WantedBy=multi-user.target
